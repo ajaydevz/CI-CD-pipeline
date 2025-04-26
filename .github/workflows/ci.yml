@@ -1,4 +1,4 @@
-name: React (Vite) CI
+name: React (Vite) CI and Docker Build
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,23 +27,23 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Dummy test (optional)
+        run: echo "No tests yet"
 
+  docker-build-and-push:
+    needs: build-and-test
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-docker-build-and-push:
-  needs: build-and-test
-  runs-on: ubuntu-latest
+      - name: Docker login to Docker Hub
+        run: |
+          docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t "${{ secrets.DOCKERHUB_USERNAME }}/welcome-react-app:latest" .
 
-    - name: Docker login to Docker Hub
-      run: |
-        docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
-
-    - name: Build Docker image
-      run: docker build -t "${{ secrets.DOCKERHUB_USERNAME }}/welcome-react-app:latest" .
-
-    - name: Push Docker image to Docker Hub
-      run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/welcome-react-app:latest"      
+      - name: Push Docker image to Docker Hub
+        run: docker push "${{ secrets.DOCKERHUB_USERNAME }}/welcome-react-app:latest"
